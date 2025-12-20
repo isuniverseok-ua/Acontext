@@ -1245,6 +1245,56 @@ const docTemplate = `{
                 ]
             }
         },
+        "/session/{session_id}/observing_status": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the count of observed, in_process, and pending messages",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "session"
+                ],
+                "summary": "Get message observing status for a session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Session ID",
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/serializer.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.MessageObservingStatus"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/session/{session_id}/task": {
             "get": {
                 "security": [
@@ -3003,6 +3053,23 @@ const docTemplate = `{
                 },
                 "task_id": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.MessageObservingStatus": {
+            "type": "object",
+            "properties": {
+                "in_process": {
+                    "type": "integer"
+                },
+                "observed": {
+                    "type": "integer"
+                },
+                "pending": {
+                    "type": "integer"
                 },
                 "updated_at": {
                     "type": "string"

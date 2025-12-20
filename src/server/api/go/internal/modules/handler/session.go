@@ -673,3 +673,35 @@ func (h *SessionHandler) GetTokenCounts(c *gin.Context) {
 		TotalTokens: totalTokens,
 	}})
 }
+
+// GetSessionObservingStatus godoc
+//
+//	@Summary		Get message observing status for a session
+//	@Description	Returns the count of observed, in_process, and pending messages
+//	@Tags			session
+//	@Accept			json
+//	@Produce		json
+//	@Param			session_id	path	string	true	"Session ID"	format(uuid)
+//	@Security		BearerAuth
+//	@Success		200	{object}	serializer.Response{data=model.MessageObservingStatus}
+//	@Router			/session/{session_id}/observing_status [get]
+func (h *SessionHandler) GetSessionObservingStatus(c *gin.Context) {
+	sessionID := c.Param("session_id")
+
+	if sessionID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "session_id is required",
+		})
+		return
+	}
+
+	status, err := h.svc.GetSessionObservingStatus(c.Request.Context(), sessionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, status)
+}
