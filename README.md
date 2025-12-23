@@ -48,16 +48,30 @@ Acontext can help you:
 
 # 💡 Core Features
 
-- **Store contexts & artifacts** 
-  - [Session](https://docs.acontext.io/store/messages/multi-provider): Multi-modal Message Storage
+- Context Engineering
+  - [Session](https://docs.acontext.io/store/messages/multi-provider): Multi-modal LLM Message Storage
   - [Disk](https://docs.acontext.io/store/disk): Filesystem for artifacts
-- **Do context engineering for you**
   - [Context Editing](https://docs.acontext.io/store/editing) - Context Engineering in one call
+
+<div align="center">
+    <picture>
+      <img alt="Acontext Learning" src="./assets/acontext-context-engineering.png" width="80%">
+    </picture>
+  <p>Context Engineering in Acontext</p>
+</div>
+
 - **Observe agent tasks and user feedback**
   - [Task Agent](https://docs.acontext.io/observe/agent_tasks) - Background agent that collects task's status, progress and preferences
 - **Enable agent self-learning**
   - [Experience Agent](https://docs.acontext.io/learn/advance/experience-agent) - Background agents that distill, save and search skills for each user.
 - **View everything in one [dashboard](https://docs.acontext.io/observe/dashboard)**
+
+<div align="center">
+    <picture>
+      <img alt="Dashboard" src="./docs/images/dashboard/BI.png" width="80%">
+    </picture>
+  <p>Dashboard of Agent Success Rate and Other Metrics</p>
+</div>
 
 
 
@@ -226,14 +240,6 @@ Once it's done, you can access the following endpoints:
 - Acontext API Base URL: http://localhost:8029/api/v1
 - Acontext Dashboard: http://localhost:3000/
 
-
-
-<div align="center">
-    <picture>
-      <img alt="Dashboard" src="./docs/images/dashboard/BI.png" width="100%">
-    </picture>
-  <p>Dashboard of Agent Success Rate and Other Metrics</p>
-</div>
 
 
 
