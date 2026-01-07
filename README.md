@@ -51,7 +51,7 @@
 
 > How satisfied are your users, really? Acontext tracks tasks per session and shows you your agent's actual success rate. 
 >
-> Stop obsessing over token costs, find your PMF.
+> Stop obsessing over token costs, improve the agent first.
 
 **🧠 Problem 4: Your agent is hit or miss.**
 
