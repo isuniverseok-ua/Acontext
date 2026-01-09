@@ -21,6 +21,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type SessionService interface {
@@ -261,6 +262,20 @@ func (s *sessionService) validateAndResolveGeminiToolResult(ctx context.Context,
 }
 
 func (s *sessionService) StoreMessage(ctx context.Context, in StoreMessageInput) (*model.Message, error) {
+	// Validate session exists and belongs to project before performing expensive operations
+	session, err := s.sessionRepo.Get(ctx, &model.Session{ID: in.SessionID})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("session not found")
+		}
+		return nil, fmt.Errorf("failed to get session: %w", err)
+	}
+
+	// Verify session belongs to the project
+	if session.ProjectID != in.ProjectID {
+		return nil, fmt.Errorf("session does not belong to project")
+	}
+
 	parts := make([]model.Part, 0, len(in.Parts))
 
 	for idx := range in.Parts {
