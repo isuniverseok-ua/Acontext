@@ -678,6 +678,100 @@
         "x-codegen-request-body-name" : "request"
       }
     },
+    "/disk/{disk_id}/artifact/glob" : {
+      "get" : {
+        "description" : "Search through artifact file paths using glob patterns (*, ?, etc.)",
+        "parameters" : [ {
+          "description" : "Disk ID",
+          "in" : "path",
+          "name" : "disk_id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "description" : "Glob pattern (e.g., '**/*.py', '*.txt')",
+          "in" : "query",
+          "name" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Maximum number of results (default 100, max 1000)",
+          "in" : "query",
+          "name" : "limit",
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/_disk__disk_id__artifact_glob_get_200_response"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "security" : [ {
+          "BearerAuth" : [ ]
+        } ],
+        "summary" : "Search artifact paths with glob patterns",
+        "tags" : [ "artifact" ]
+      }
+    },
+    "/disk/{disk_id}/artifact/grep" : {
+      "get" : {
+        "description" : "Search through text-based artifact content using regex patterns",
+        "parameters" : [ {
+          "description" : "Disk ID",
+          "in" : "path",
+          "name" : "disk_id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "description" : "Regex pattern to search for",
+          "in" : "query",
+          "name" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Maximum number of results (default 100, max 1000)",
+          "in" : "query",
+          "name" : "limit",
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/_disk__disk_id__artifact_glob_get_200_response"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "security" : [ {
+          "BearerAuth" : [ ]
+        } ],
+        "summary" : "Search artifact content with regex",
+        "tags" : [ "artifact" ]
+      }
+    },
     "/disk/{disk_id}/artifact/ls" : {
       "get" : {
         "description" : "List artifacts in a specific path or all artifacts in a disk",
@@ -3467,6 +3561,21 @@
           "properties" : {
             "data" : {
               "$ref" : "#/components/schemas/model.Artifact"
+            }
+          },
+          "type" : "object"
+        } ]
+      },
+      "_disk__disk_id__artifact_glob_get_200_response" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/serializer.Response"
+        }, {
+          "properties" : {
+            "data" : {
+              "items" : {
+                "$ref" : "#/components/schemas/model.Artifact"
+              },
+              "type" : "array"
             }
           },
           "type" : "object"
