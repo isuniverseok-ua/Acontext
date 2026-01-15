@@ -19,8 +19,7 @@
             "pages": [
               "index",
               "quick",
-              "llm_quick",
-              "local"
+              "llm_quick"
             ]
           },
           {
@@ -54,7 +53,7 @@
             ]
           },
           {
-            "group": "Agentic SDK",
+            "group": "Agent Tools",
             "icon": "wand-magic-sparkles",
             "pages": [
               "sdk/disk_tools",
@@ -62,7 +61,7 @@
             ]
           },
           {
-            "group": "Observability",
+            "group": "Agent Observability",
             "icon": "radar",
             "pages": [
               {
@@ -112,6 +111,7 @@
             "group": "Customization",
             "icon": "gear",
             "pages": [
+              "settings/local",
               "settings/core",
               "settings/runtime"
             ]
