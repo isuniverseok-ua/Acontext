@@ -20,7 +20,7 @@ async def setup() -> None:
     await init_s3()
     await init_mq()
     await init_sandbox()
-    LOG.info("Acontext launch successfully 🎉")
+    LOG.info("Launch Acontext core successfully 🎉")
 
 
 async def cleanup() -> None:

@@ -1,4 +1,4 @@
-from sqlalchemy import select, update, type_coerce, func
+from sqlalchemy import select, update, type_coerce, func, extract, Integer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import JSONB
 from ...schema.sandbox import (
@@ -11,7 +11,27 @@ from ...schema.result import Result
 from ...schema.orm import SandboxLog
 from ...schema.utils import asUUID
 from ...infra.sandbox.client import SANDBOX_CLIENT
-from ...env import LOG
+from ...env import LOG, DEFAULT_CORE_CONFIG
+
+
+async def _update_will_total_alive_seconds(
+    db_session: AsyncSession,
+    sandbox_id: asUUID,
+    reset_alive_seconds: int = DEFAULT_CORE_CONFIG.sandbox_default_keepalive_seconds,
+) -> None:
+    """
+    Update the will_total_alive_seconds field based on how long the sandbox has been alive.
+    Formula: DEFAULT_KEEPALIVE_SECONDS + (current_time - created_at)
+    """
+    stmt = (
+        update(SandboxLog)
+        .where(SandboxLog.id == sandbox_id)
+        .values(
+            will_total_alive_seconds=reset_alive_seconds
+            + func.cast(extract("epoch", func.now() - SandboxLog.created_at), Integer)
+        )
+    )
+    await db_session.execute(stmt)
 
 
 async def _get_backend_sandbox_id(
@@ -64,6 +84,7 @@ async def create_sandbox(
             backend_type=backend.type,
             history_commands=[],
             generated_files=[],
+            will_total_alive_seconds=DEFAULT_CORE_CONFIG.sandbox_default_keepalive_seconds,
         )
         db_session.add(sandbox_log)
         await db_session.flush()
@@ -135,6 +156,9 @@ async def get_sandbox(
         backend = SANDBOX_CLIENT.use_backend()
         info = await backend.get_sandbox(backend_sandbox_id)
 
+        # Update will_total_alive_seconds
+        await _update_will_total_alive_seconds(db_session, sandbox_id)
+
         # Replace the backend sandbox ID with the unified ID
         info.sandbox_id = str(sandbox_id)
         return Result.resolve(info)
@@ -170,6 +194,11 @@ async def update_sandbox(
         backend_sandbox_id = result.data
         backend = SANDBOX_CLIENT.use_backend()
         info = await backend.update_sandbox(backend_sandbox_id, config)
+
+        # Update will_total_alive_seconds
+        await _update_will_total_alive_seconds(
+            db_session, sandbox_id, config.keepalive_longer_by_seconds
+        )
 
         # Replace the backend sandbox ID with the unified ID
         info.sandbox_id = str(sandbox_id)
@@ -221,6 +250,9 @@ async def exec_command(
             )
         )
         await db_session.execute(stmt)
+
+        # Update will_total_alive_seconds
+        await _update_will_total_alive_seconds(db_session, sandbox_id)
 
         return Result.resolve(output)
     except ValueError as e:
@@ -278,6 +310,9 @@ async def download_file(
             )
             await db_session.execute(stmt)
 
+        # Update will_total_alive_seconds
+        await _update_will_total_alive_seconds(db_session, sandbox_id)
+
         return Result.resolve(success)
     except ValueError as e:
         return Result.reject(f"Sandbox not found or backend not available: {e}")
@@ -315,6 +350,10 @@ async def upload_file(
         success = await backend.upload_file(
             backend_sandbox_id, from_s3_file, upload_to_sandbox_path
         )
+
+        # Update will_total_alive_seconds
+        await _update_will_total_alive_seconds(db_session, sandbox_id)
+
         return Result.resolve(success)
     except ValueError as e:
         return Result.reject(f"Sandbox not found or backend not available: {e}")
@@ -339,6 +378,10 @@ async def get_sandbox_log(
     sandbox_log = await db_session.get(SandboxLog, sandbox_id)
     if sandbox_log is None:
         return Result.reject(f"Sandbox {sandbox_id} not found")
+
+    # Update will_total_alive_seconds
+    await _update_will_total_alive_seconds(db_session, sandbox_id)
+
     return Result.resolve(sandbox_log)
 
 

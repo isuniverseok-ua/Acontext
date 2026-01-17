@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from sqlalchemy import ForeignKey, Index, Column, String
+from sqlalchemy import ForeignKey, Index, Column, String, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from typing import TYPE_CHECKING
@@ -31,6 +31,10 @@ class SandboxLog(CommonMixin):
 
     history_commands: dict = field(metadata={"db": Column(JSONB, nullable=False)})
     generated_files: dict = field(metadata={"db": Column(JSONB, nullable=False)})
+
+    will_total_alive_seconds: int = field(
+        metadata={"db": Column(Integer, nullable=False)}
+    )
 
     # Relationships
     project: "Project" = field(

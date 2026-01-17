@@ -348,7 +348,7 @@ class AsyncSingleThreadMQConsumer:
                     hint = await self._special_queue(config)
                     return hint
 
-                LOG.info(
+                LOG.debug(
                     f"Looping consumer - queue: {config.queue_name} <- ({config.exchange_name}, {config.routing_key})"
                 )
 
@@ -403,7 +403,7 @@ class AsyncSingleThreadMQConsumer:
                         LOG.warning(
                             f"Error closing channel - queue: {config.queue_name}: {e}"
                         )
-                LOG.info(f"Consumer channel closed - queue: {config.queue_name}")
+                LOG.debug(f"Consumer channel closed - queue: {config.queue_name}")
 
     async def _setup_consumer_on_channel(
         self,
@@ -441,7 +441,7 @@ class AsyncSingleThreadMQConsumer:
             queue_arguments["x-dead-letter-routing-key"] = dlx_routing_key
 
         if config.need_dlx_queue and config.use_dlx_ex_rk is not None:
-            LOG.info(f"Queue {config.queue_name} uses DLX {config.use_dlx_ex_rk}")
+            LOG.debug(f"Queue {config.queue_name} uses DLX {config.use_dlx_ex_rk}")
             queue_arguments["x-dead-letter-exchange"] = config.use_dlx_ex_rk[0]
             queue_arguments["x-dead-letter-routing-key"] = config.use_dlx_ex_rk[1]
 
@@ -532,9 +532,13 @@ class AsyncSingleThreadMQConsumer:
                 )
                 span.set_attribute("messaging.system", "rabbitmq")
                 span.set_attribute("messaging.destination.name", exchange_name)
-                span.set_attribute("messaging.rabbitmq.destination.routing_key", routing_key)
+                span.set_attribute(
+                    "messaging.rabbitmq.destination.routing_key", routing_key
+                )
                 span.set_attribute("messaging.operation", "publish")
-                span.set_attribute("messaging.message.body.size", len(body.encode("utf-8")))
+                span.set_attribute(
+                    "messaging.message.body.size", len(body.encode("utf-8"))
+                )
             except Exception as e:
                 LOG.debug(f"Failed to create producer span: {e}")
                 span = None
@@ -607,14 +611,18 @@ class AsyncSingleThreadMQConsumer:
                         # Either not a connection error or we've exhausted retries
                         if span:
                             span.record_exception(e)
-                            span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
+                            span.set_status(
+                                trace.Status(trace.StatusCode.ERROR, str(e))
+                            )
                         raise
 
             # If we get here, we've exhausted all retries (shouldn't happen due to raise above)
             if last_exception:
                 if span:
                     span.record_exception(last_exception)
-                    span.set_status(trace.Status(trace.StatusCode.ERROR, str(last_exception)))
+                    span.set_status(
+                        trace.Status(trace.StatusCode.ERROR, str(last_exception))
+                    )
                 raise last_exception
         finally:
             if span:
@@ -640,7 +648,7 @@ class AsyncSingleThreadMQConsumer:
             task = asyncio.create_task(self._consume_queue(config))
             self._consumer_loop_tasks.append(task)
 
-        LOG.info(f"Started all consumers (count: {len(self.consumers)})")
+        LOG.debug(f"Started all consumers (count: {len(self.consumers)})")
         try:
             # Wait for shutdown signal or any task to complete
             while not self._shutdown_event.is_set():
@@ -659,7 +667,7 @@ class AsyncSingleThreadMQConsumer:
                         )  # This will raise the exception if task failed
                         if task in self._consumer_loop_tasks:
                             self._consumer_loop_tasks.remove(task)
-                            LOG.info(
+                            LOG.debug(
                                 f"Consumer task completed. {r}. Remaining tasks: {len(self._consumer_loop_tasks)}"
                             )
                     except Exception as e:

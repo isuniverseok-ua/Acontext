@@ -79,7 +79,7 @@ class NovitaSandboxBackend(SandboxBackend):
             template=template,
             api_key=self.__api_key,
             domain=self.__domain_base_url,
-            timeout=create_config.keepalive_seconds,
+            timeout=DEFAULT_CORE_CONFIG,
             metadata=create_config.additional_configs,
         )
         info = await sandbox.get_info()

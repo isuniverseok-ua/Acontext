@@ -11,11 +11,7 @@ class SandboxStatus(StrEnum):
 
 
 class SandboxCreateConfig(BaseModel):
-    keepalive_seconds: int = 60 * 30  # 30 minutes
     template: str | None = None
-    cpu_cores: float = 1
-    memory_mb: int = 1024
-    disk_gb: int = 10
     additional_configs: dict[str, str] = Field(default_factory=dict)
 
 
