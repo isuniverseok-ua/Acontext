@@ -314,6 +314,13 @@ async function handleUploadFile(sandboxId: string, request: Request, env: Env): 
 			sleepAfter: keepalive_seconds ? `${keepalive_seconds}s` : undefined,
 		});
 
+		// Extract parent directory from file_path and create it if needed
+		const lastSlashIndex = file_path.lastIndexOf('/');
+		if (lastSlashIndex > 0) {
+			const parentDir = file_path.substring(0, lastSlashIndex);
+			await sandbox.exec(`mkdir -p ${parentDir}`);
+		}
+
 		// Write file with specified encoding (SDK handles base64 decoding)
 		await sandbox.writeFile(file_path, content, { encoding });
 
