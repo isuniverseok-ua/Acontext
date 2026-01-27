@@ -6,7 +6,6 @@
     <h1>Acontext</h1>
  	  <strong>Context Data Platform for Building Cloud-native AI Agents</strong>
  	</p>
-	</br>
  	<p align="center">
  	  	<a href="https://acontext.io">🌐 Website</a>
       |
@@ -194,7 +193,7 @@ client.sessions.store_message(
 result = client.sessions.get_messages(session_id=session.id, format="anthropic")
 ```
 
-#### Context Engineering
+### Context Engineering
 
 > [Session Summary](https://docs.acontext.io/engineering/session_summary) | [Context Editing](https://docs.acontext.io/engineering/editing)
 
@@ -216,15 +215,14 @@ result = client.sessions.get_messages(
 ```
 
 ### Agent Tools & Skills
+<details>
+<summary>Disk Tool</summary>
 
-#### Disk Tool
+
 
 > [Tool Docs](https://docs.acontext.io/tool/disk_tools) | [SDK Docs](https://docs.acontext.io/store/disk)
-
+> 
 Persistent file storage for agents. Supports read, write, grep, glob.
-
-<details>
-<summary>Code Example</summary>
 
 ```python
 from acontext.agent.disk import DISK_TOOLS
@@ -250,14 +248,14 @@ for tc in response.choices[0].message.tool_calls:
 
 </details>
 
-#### Sandbox Tool
-
-> [Tool Docs](https://docs.acontext.io/tool/bash_tools) | [SDK Docs](https://docs.acontext.io/store/sandbox)
-
-Isolated code execution environment with bash, Python, and common tools.
 
 <details>
-<summary>Code Example</summary>
+<summary>Sandbox Tool</summary>
+
+
+> [Tool Docs](https://docs.acontext.io/tool/bash_tools) | [SDK Docs](https://docs.acontext.io/store/sandbox)
+>
+> Isolated code execution environment with bash, Python, and common tools.
 
 ```python
 from acontext.agent.sandbox import SANDBOX_TOOLS
@@ -284,14 +282,14 @@ for tc in response.choices[0].message.tool_calls:
 
 </details>
 
-#### Sandbox with Skills
+<details>
+<summary>Sandbox with Skills</summary>
+
+
 
 > [Tool Docs](https://docs.acontext.io/tool/bash_tools#mounting-skills-in-sandbox) | [SDK Docs](https://docs.acontext.io/store/skill)
-
-Mount reusable Agent Skills into sandbox at `/skills/{name}/`. [Download Anthropic's web artifact skill](https://github.com/memodb-io/Acontext-Examples/raw/refs/heads/main/assets/web-artifacts-builder.zip).
-
-<details>
-<summary>Code Example</summary>
+>
+> Mount reusable Agent Skills into sandbox at `/skills/{name}/`. [Download xlsx skill](https://github.com/memodb-io/Acontext-Examples/raw/refs/heads/main/python/interactive-agent-skill/xlsx.zip).
 
 ```python
 from acontext import FileUpload
@@ -307,10 +305,31 @@ ctx = SANDBOX_TOOLS.format_context(
 )
 
 # Context prompt includes skill instructions
-print(ctx.get_context_prompt())
+response = OpenAI().chat.completions.create(
+    model="gpt-4.1",
+    messages=[
+        {"role": "system", "content": f"You have sandbox access.\n\n{ctx.get_context_prompt()}"},
+        {"role": "user", "content": "Create an Excel file with a simple budget spreadsheet"}
+    ],
+    tools=SANDBOX_TOOLS.to_openai_tool_schema()
+)
+
+# Execute tool calls
+for tc in response.choices[0].message.tool_calls:
+    result = SANDBOX_TOOLS.execute_tool(ctx, tc.function.name, json.loads(tc.function.arguments))
 ```
 
+You can download a full skill interactive demo with `acontext-cli`:
+
+```shell
+acontext create my-skill --template-path "python/interactive-agent-skill"
+```
+
+
+
 </details>
+
+
 
 
 
