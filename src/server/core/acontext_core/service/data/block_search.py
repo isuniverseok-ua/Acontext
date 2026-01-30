@@ -154,3 +154,56 @@ async def search_content_blocks(
             )
         )
     return r
+
+
+# TODO: add project_id to record
+async def search_sessions(
+    db_session: AsyncSession,
+    space_id: asUUID,
+    query_text: str,
+    topk: int = 10,
+    threshold: float = 0.8,
+    fetch_ratio: float = 5.0,  # Higher fetch ratio since many blocks might come from same session
+) -> Result[List[asUUID]]:
+    """
+    Search for related sessions by finding SOP blocks that were digested from them.
+    Blocks must have 'session_id' in their props.
+    """
+    # 1. Search for SOP blocks
+    r = await search_blocks(
+        db_session,
+        space_id,
+        query_text,
+        [BLOCK_TYPE_SOP],
+        topk=topk * 2,  # Fetch more blocks to ensure enough unique sessions
+        threshold=threshold,
+        fetch_ratio=fetch_ratio,
+    )
+    if not r.ok():
+        return Result.reject(r.error)
+
+    # 2. Extract unique session_ids with order preserved
+    session_ids = []
+    seen = set()
+
+    for block, _ in r.data:
+        if not block.props:
+            continue
+        sid_str = block.props.get("session_id")
+        if not sid_str:
+            continue
+
+        if sid_str in seen:
+            continue
+
+        try:
+            # Validate UUID format
+            sid = asUUID(sid_str)
+            seen.add(sid_str)
+            session_ids.append(sid)
+            if len(session_ids) >= topk:
+                break
+        except Exception:
+            continue
+
+    return Result.resolve(session_ids)

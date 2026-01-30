@@ -39,6 +39,16 @@ async def _insert_data_handler(
         return Result.resolve(
             f"Path {page_path} is not a page (type: {page_block.type})"
         )
+
+    # Try to find session_id from task_ids
+    session_id = None
+    if ctx.task_ids:
+        # We assume all tasks in this context belong to the same session for now
+        # Creating a helper to get session_id from task would be better but for now we do this:
+        r_task = await TD.fetch_task(ctx.db_session, ctx.task_ids[0])
+        if r_task.ok():
+            session_id = r_task.data.session_id
+
     r = await BW.write_block_to_page(
         ctx.db_session,
         ctx.project_id,
@@ -46,6 +56,7 @@ async def _insert_data_handler(
         page_block.id,
         insert_data,
         after_block_index=after_block_index,
+        session_id=session_id,
     )
     if not r.ok():
         return Result.resolve(f"Failed to insert candidate data: {r.error}")

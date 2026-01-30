@@ -13,6 +13,7 @@ from ..types.space import (
     ListSpacesOutput,
     Space,
     SpaceSearchResult,
+    SessionSearchResult,
 )
 
 
@@ -139,6 +140,29 @@ class SpacesAPI:
             "GET", f"/space/{space_id}/experience_search", params=params or None
         )
         return SpaceSearchResult.model_validate(data)
+
+    def search_sessions(
+        self,
+        space_id: str,
+        *,
+        query: str,
+        limit: int | None = None,
+    ) -> SessionSearchResult:
+        """Search for history sessions related to a query.
+
+        Args:
+            space_id: The UUID of the space.
+            query: The search query string.
+            limit: Maximum number of results to return (1-50, default 10).
+
+        Returns:
+            SessionSearchResult containing list of session IDs.
+        """
+        params = build_params(query=query, limit=limit)
+        data = self._requester.request(
+            "GET", f"/space/{space_id}/session_search", params=params or None
+        )
+        return SessionSearchResult.model_validate(data)
 
     def get_unconfirmed_experiences(
         self,

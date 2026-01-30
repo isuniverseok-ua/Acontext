@@ -47,6 +47,10 @@ class SpaceSearchResult(BaseModel):
     final_answer: str | None = Field(None, description="AI-generated final answer")
 
 
+class SessionSearchResult(BaseModel):
+    session_ids: list[str]
+
+
 class ExperienceConfirmation(BaseModel):
     """Experience confirmation model."""
 

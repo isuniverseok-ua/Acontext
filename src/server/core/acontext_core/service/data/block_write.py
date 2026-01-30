@@ -24,6 +24,7 @@ async def write_sop_block_to_parent(
     par_block_id: asUUID,
     sop_data: SOPData,
     after_block_index: Optional[int] = None,
+    session_id: Optional[asUUID] = None,
 ) -> Result[asUUID]:
     if not sop_data.tool_sops and not sop_data.preferences.strip():
         return Result.reject("SOP data is empty")
@@ -62,6 +63,8 @@ async def write_sop_block_to_parent(
         },
         sort=next_sort,
     )
+    if session_id:
+        new_block.props["session_id"] = str(session_id)
     r = new_block.validate_for_creation()
     if not r.ok():
         return r
@@ -122,6 +125,7 @@ async def write_block_to_page(
     par_block_id: asUUID,
     data: GeneralBlockData,
     after_block_index: Optional[int] = None,
+    session_id: Optional[asUUID] = None,
 ) -> Result[asUUID]:
     if data["type"] not in WRITE_BLOCK_FACTORY:
         return Result.reject(f"Block type {data['type']} is not supported")
@@ -135,6 +139,7 @@ async def write_block_to_page(
         par_block_id,
         block_data,
         after_block_index=after_block_index,
+        session_id=session_id,
     )
     if r.ok():
         asyncio.create_task(

@@ -51,6 +51,11 @@ type SpaceSearchResult struct {
 	CitedBlocks []SearchResultBlockItem `json:"cited_blocks"`
 }
 
+// SessionSearchResponse represents the result of a session search
+type SessionSearchResponse struct {
+	SessionIDs []uuid.UUID `json:"session_ids"`
+}
+
 // ExperienceSearchRequest represents the request for experience search
 type ExperienceSearchRequest struct {
 	Query             string   `json:"query"`
@@ -103,6 +108,51 @@ func (c *CoreClient) ExperienceSearch(ctx context.Context, projectID, spaceID uu
 	}
 
 	var result SpaceSearchResult
+	if err := sonic.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("unmarshal response: %w", err)
+	}
+
+	return &result, nil
+}
+
+// SessionSearch calls the session_search endpoint
+func (c *CoreClient) SessionSearch(ctx context.Context, projectID, spaceID uuid.UUID, query string, limit int) (*SessionSearchResponse, error) {
+	endpoint := fmt.Sprintf("%s/api/v1/project/%s/space/%s/session_search", c.BaseURL, projectID.String(), spaceID.String())
+
+	// Build query parameters
+	params := url.Values{}
+	params.Set("query", query)
+	params.Set("limit", fmt.Sprintf("%d", limit))
+
+	fullURL := fmt.Sprintf("%s?%s", endpoint, params.Encode())
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create request: %w", err)
+	}
+
+	// Important: propagate trace context to downstream service
+	c.Propagator.Inject(ctx, propagation.HeaderCarrier(httpReq.Header))
+
+	resp, err := c.HTTPClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("do request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		c.Logger.Error("session_search request failed",
+			zap.Int("status_code", resp.StatusCode),
+			zap.String("body", string(body)))
+		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result SessionSearchResponse
 	if err := sonic.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("unmarshal response: %w", err)
 	}

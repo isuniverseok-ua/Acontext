@@ -294,6 +294,54 @@ func (h *SpaceHandler) GetExperienceSearch(c *gin.Context) {
 	c.JSON(http.StatusOK, serializer.Response{Data: result})
 }
 
+type GetSessionSearchReq struct {
+	Query string `form:"query" json:"query" binding:"required"`
+	Limit int    `form:"limit,default=10" json:"limit" binding:"omitempty,min=1,max=50"`
+}
+
+// GetSessionSearch godoc
+//
+//	@Summary		Get session search
+//	@Description	Search for sessions related to a query within a space
+//	@Tags			space
+//	@Accept			json
+//	@Produce		json
+//	@Param			space_id	path	string	true	"Space ID"	Format(uuid)
+//	@Param			query		query	string	true	"Search query"
+//	@Param			limit		query	int		false	"Maximum number of results (1-50, default 10)"
+//	@Security		BearerAuth
+//	@Success		200	{object}	serializer.Response{data=httpclient.SessionSearchResponse}
+//	@Router			/space/{space_id}/session_search [get]
+func (h *SpaceHandler) GetSessionSearch(c *gin.Context) {
+	spaceID, err := uuid.Parse(c.Param("space_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, serializer.ParamErr("", err))
+		return
+	}
+
+	req := GetSessionSearchReq{
+		Limit: 10,
+	}
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, serializer.ParamErr("", err))
+		return
+	}
+
+	project, ok := c.MustGet("project").(*model.Project)
+	if !ok {
+		c.JSON(http.StatusBadRequest, serializer.ParamErr("", errors.New("project not found")))
+		return
+	}
+
+	result, err := h.coreClient.SessionSearch(c.Request.Context(), project.ID, spaceID, req.Query, req.Limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, serializer.Err(http.StatusInternalServerError, "Failed to call core service", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, serializer.Response{Data: result})
+}
+
 type ListExperienceConfirmationsReq struct {
 	Limit    int    `form:"limit,default=20" json:"limit" binding:"required,min=1,max=200" example:"20"`
 	Cursor   string `form:"cursor" json:"cursor" example:"cHJvdGVjdGVkIHZlcnNpb24gdG8gYmUgZXhjbHVkZWQgaW4gcGFyc2luZyB0aGUgY3Vyc29y"`

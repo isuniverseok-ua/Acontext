@@ -25,6 +25,7 @@ from acontext_core.schema.api.response import (
     InsertBlockResponse,
     Flag,
     LearningStatusResponse,
+    SessionSearchResponse,
 )
 from acontext_core.schema.tool.tool_reference import ToolReferenceData
 from acontext_core.schema.utils import asUUID
@@ -237,6 +238,40 @@ async def search_space(
         return result
     else:
         raise HTTPException(status_code=400, detail=f"Invalid search mode: {mode}")
+
+
+@app.get("/api/v1/project/{project_id}/space/{space_id}/session_search")
+async def search_sessions(
+    project_id: asUUID = Path(..., description="Project ID to search within"),
+    space_id: asUUID = Path(..., description="Space ID to search within"),
+    query: str = Query(..., description="Search query"),
+    limit: int = Query(
+        10, ge=1, le=50, description="Maximum number of results to return"
+    ),
+    threshold: Optional[float] = Query(
+        None,
+        ge=0.0,
+        le=2.0,
+        description="Cosine distance threshold (0=identical, 2=opposite). Uses config default if not specified",
+    ),
+) -> SessionSearchResponse:
+    search_threshold = (
+        threshold
+        if threshold is not None
+        else DEFAULT_CORE_CONFIG.block_embedding_search_cosine_distance_threshold
+    )
+    async with DB_CLIENT.get_session_context() as db_session:
+        r = await BS.search_sessions(
+            db_session,
+            space_id,
+            query,
+            topk=limit,
+            threshold=search_threshold,
+        )
+        if not r.ok():
+            raise HTTPException(status_code=500, detail=str(r.error))
+
+        return SessionSearchResponse(session_ids=r.data)
 
 
 @app.post("/api/v1/project/{project_id}/space/{space_id}/insert_block")

@@ -75,6 +75,7 @@ func NewRouter(d RouterDeps) *gin.Engine {
 			space.GET("/:space_id/configs", d.SpaceHandler.GetConfigs)
 
 			space.GET("/:space_id/experience_search", d.SpaceHandler.GetExperienceSearch)
+			space.GET("/:space_id/session_search", d.SpaceHandler.GetSessionSearch)
 
 			space.GET("/:space_id/experience_confirmations", d.SpaceHandler.ListExperienceConfirmations)
 			space.PUT("/:space_id/experience_confirmations/:experience_id", d.SpaceHandler.ConfirmExperience)
